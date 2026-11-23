@@ -1,10 +1,30 @@
-const { request, run } = require('./redsms.cjs');
+const { createHash, randomUUID } = require('node:crypto');
 
-run(() => {
-  const args = process.argv.slice(2);
-  if (args.length === 0) return request('GET', 'client/info');
-  // Compatibility with the original command-line examples.
-  if (args.length === 1 && args[0] === 'send') return require('./send_sms.cjs').sendSms();
-  if (args.length === 2 && args[0] === 'status') return require('./message_status.cjs').messageStatus(args[1]);
-  throw new Error('Использование: node client_info.cjs');
+function required(name) {
+  if (!process.env[name]) throw new Error('Задайте ' + name);
+  return process.env[name];
+}
+
+async function main() {
+  if (process.argv.length !== 2) {
+    throw new Error('Использование: node client_info.cjs');
+  }
+  const url = new URL('https://cp.redsms.ru/api/client/info');
+  const values = '';
+  const ts = randomUUID();
+  const sig = createHash('md5').update(values + ts + required('REDSMS_API_KEY')).digest('hex');
+  const response = await fetch(url, {
+    method: 'GET', headers: { login: required('REDSMS_LOGIN'), ts, sig },
+    signal: AbortSignal.timeout(15000), redirect: 'error',
+  });
+  const body = await response.text();
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${body}`);
+  const data = JSON.parse(body);
+  console.log(JSON.stringify(data, null, 2));
+  if (!data.success || data.errors?.length) process.exitCode = 1;
+}
+
+main().catch(error => {
+  console.error(error.message);
+  process.exitCode = 1;
 });
