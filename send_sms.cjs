@@ -10,8 +10,10 @@ async function main() {
     throw new Error('Использование: node send_sms.cjs');
   }
   const url = new URL('https://cp.redsms.ru/api/message');
+  const recipient = required('REDSMS_TO');
+  if (!/^[+]?[1-9][0-9]{1,14}$/.test(recipient)) throw new Error('Укажите один номер в международном формате, например +12025550123.');
   const fields = { from: required('REDSMS_FROM'), route: 'sms',
-    text: 'Тестовое сообщение от redsms.ru', to: required('REDSMS_TO') };
+    text: 'Тестовое сообщение от redsms.ru', to: recipient };
   const params = new URLSearchParams(fields);
   const values = Object.keys(fields).sort().map(key => fields[key]).join('');
   const ts = randomUUID();

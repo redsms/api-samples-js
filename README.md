@@ -24,7 +24,7 @@ node send_sms.cjs
 
 ## Статус SMS · GET /api/message/{uuid}
 
-Подставьте UUID из ответа на отправку.
+После отправки возьмите UUID из `items[0].uuid`. Передайте его в запрос статуса и прочитайте `item.status`: значение `delivered` подтверждает доставку.
 
 ```sh
 node message_status.cjs UUID
